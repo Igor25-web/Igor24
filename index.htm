@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Прокат Авто</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-green-200 min-h-screen flex flex-col items-center justify-center p-6">
+
+  <!-- Реєстрація -->
+  <div id="auth-section" class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+    <h1 class="text-3xl font-bold mb-6">Реєстрація</h1>
+    <input id="email" type="email" placeholder="Email" class="w-full mb-4 p-3 rounded-xl border border-gray-300" />
+    <input id="password" type="password" placeholder="Пароль" class="w-full mb-4 p-3 rounded-xl border border-gray-300" />
+    <button onclick="registerUser()" class="bg-green-500 text-white px-6 py-2 rounded-xl hover:bg-green-600 transition">Зареєструватися</button>
+    <div id="auth-result" class="mt-6 text-md font-semibold text-green-700"></div>
+  </div>
+
+  <!-- Прокат авто -->
+  <div id="rent-section" class="hidden bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full mt-8">
+    <h1 class="text-4xl font-bold text-center mb-8">Прокат Автомобілів</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div>
+        <label class="block mb-2 font-semibold">Виберіть авто:</label>
+        <select id="car" onchange="showCarImage()" class="w-full p-3 rounded-xl border border-gray-300">
+          <option value="Tesla Model 3">Tesla Model 3</option>
+          <option value="BMW X5">BMW X5</option>
+          <option value="Audi A6">Audi A6</option>
+          <option value="Toyota Camry">Toyota Camry</option>
+        </select>
+
+        <label class="block mt-4 mb-2 font-semibold">Дата початку оренди:</label>
+        <input id="start-date" type="date" class="w-full p-3 rounded-xl border border-gray-300" />
+
+        <label class="block mt-4 mb-2 font-semibold">Години оренди:</label>
+        <input id="hours" type="number" min="1" placeholder="Кількість годин" class="w-full p-3 rounded-xl border border-gray-300" />
+      </div>
+
+      <div class="flex justify-center">
+        <img id="car-image" src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_Model_3_parked%2C_front_driver_side.jpg" alt="Car Image" class="w-full max-w-xs rounded-xl shadow-lg">
+      </div>
+    </div>
+
+    <button onclick="rentCar()" class="bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition w-full mt-8">Оформити оренду</button>
+
+    <div id="rent-result" class="mt-6 text-lg font-semibold text-green-700 text-center"></div>
+
+    <button onclick="showBookings()" class="bg-purple-500 text-white px-6 py-2 rounded-xl hover:bg-purple-600 transition w-full mt-6">Переглянути мої бронювання</button>
+  </div>
+
+  <!-- Мої бронювання -->
+  <div id="bookings-section" class="hidden bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full mt-8">
+    <h1 class="text-4xl font-bold text-center mb-8">Мої Бронювання</h1>
+    <div id="bookings-list" class="space-y-4"></div>
+
+    <button onclick="backToRent()" class="bg-gray-500 text-white px-6 py-2 rounded-xl hover:bg-gray-600 transition w-full mt-8">Назад до прокату</button>
+  </div>
+
+  <script>
+    function registerUser() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (email === '' || password === '') {
+        document.getElementById('auth-result').innerText = 'Будь ласка, заповніть усі поля.';
+        return;
+      }
+
+      let users = JSON.parse(localStorage.getItem('users')) || [];
+      const userExists = users.some(user => user.email === email);
+
+      if (userExists) {
+        document.getElementById('auth-result').innerText = 'Такий email вже зареєстрований.';
+        return;
+      }
+
+      users.push({ email, password, createdAt: new Date().toISOString() });
+      localStorage.setItem('users', JSON.stringify(users));
+
+      document.getElementById('auth-result').innerText = 'Реєстрація успішна! Переходимо до бронювання...';
+
+      setTimeout(() => {
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('rent-section').classList.remove('hidden');
+      }, 1000);
+    }
+
+    function showCarImage() {
+      const car = document.getElementById('car').value;
+      const images = {
+        "Tesla Model 3": "https://upload.wikimedia.org/wikipedia/commons/9/91/2019_Tesla_Model_3_Performance_AWD_Front.jpg",
+        "BMW X5": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/2016_BMW_X5_xDrive40d_M_Sport_Automatic_3.0_Front.jpg/1200px-2016_BMW_X5_xDrive40d_M_Sport_Automatic_3.0_Front.jpg",
+        "Audi A6": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/2018_Audi_A6_TDi_Quattro_Front.jpg/1200px-2018_Audi_A6_TDi_Quattro_Front.jpg",
+        "Toyota Camry": "https://hips.hearstapps.com/hmg-prod/images/2025-toyota-camry-xse-awd-123-66993cc94cc40.jpg?crop=0.676xw:0.506xh;0.101xw,0.399xh&resize=1200:*"
+      };
+      document.getElementById('car-image').src = images[car];
+    }
+
+    function rentCar() {
+      const car = document.getElementById('car').value;
+      const startDate = document.getElementById('start-date').value;
+      const hours = document.getElementById('hours').value;
+
+      if (!car || !startDate || !hours || hours <= 0) {
+        document.getElementById('rent-result').innerText = 'Будь ласка, заповніть усі поля правильно.';
+        return;
+      }
+
+      const pricePerHour = {
+        "Tesla Model 3": 500,
+        "BMW X5": 400,
+        "Audi A6": 350,
+        "Toyota Camry": 250
+      };
+
+      const totalPrice = pricePerHour[car] * hours;
+
+      let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+      bookings.push({ car, startDate, hours, totalPrice, bookedAt: new Date().toISOString() });
+      localStorage.setItem('bookings', JSON.stringify(bookings));
+
+      document.getElementById('rent-result').innerHTML = `
+        Ви орендували <strong>${car}</strong> на <strong>${hours}</strong> годин, починаючи з <strong>${startDate}</strong>.<br>
+        Загальна вартість: <strong>${totalPrice} грн</strong>.
+      `;
+
+      document.getElementById('hours').value = '';
+      document.getElementById('start-date').value = '';
+    }
+
+    function showBookings() {
+      document.getElementById('rent-section').classList.add('hidden');
+      document.getElementById('bookings-section').classList.remove('hidden');
+
+      const bookings = JSON.parse(localStorage.getItem('bookings')) || [];
+      const bookingsList = document.getElementById('bookings-list');
+      bookingsList.innerHTML = '';
+
+      if (bookings.length === 0) {
+        bookingsList.innerHTML = '<p class="text-center text-gray-500">Бронювань ще немає.</p>';
+        return;
+      }
+
+      bookings.forEach((booking) => {
+        const bookingItem = document.createElement('div');
+        bookingItem.className = 'p-4 border rounded-xl shadow-sm bg-gray-50';
+        bookingItem.innerHTML = `
+          <p><strong>Авто:</strong> ${booking.car}</p>
+          <p><strong>Дата початку:</strong> ${booking.startDate}</p>
+          <p><strong>Тривалість:</strong> ${booking.hours} год.</p>
+          <p><strong>Вартість:</strong> ${booking.totalPrice} грн</p>
+        `;
+        bookingsList.appendChild(bookingItem);
+      });
+    }
+
+    function backToRent() {
+      document.getElementById('bookings-section').classList.add('hidden');
+      document.getElementById('rent-section').classList.remove('hidden');
+    }
+  </script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
